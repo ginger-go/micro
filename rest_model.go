@@ -7,6 +7,7 @@ type Response struct {
 	Error      *ResponseError  `json:"error,omitempty"`
 	Pagination *sql.Pagination `json:"pagination,omitempty"`
 	Data       interface{}     `json:"data,omitempty"`
+	TraceID    string          `json:"trace_id,omitempty"`
 	Traces     []Trace         `json:"traces,omitempty"`
 }
 

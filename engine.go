@@ -103,7 +103,7 @@ func newGinServiceHandler[T any](engine *Engine, handler Handler[T]) gin.Handler
 					Message: err.Error(),
 				},
 			})
-			ctx.Error(err, traces)
+			ctx.Error(err, traceID, traces)
 			return
 		}
 		traces = append(traces, Trace{
@@ -113,7 +113,7 @@ func newGinServiceHandler[T any](engine *Engine, handler Handler[T]) gin.Handler
 			SystemID:   engine.SystemID,
 			SystemName: engine.SystemName,
 		})
-		ctx.OK(resp, traces, ctx.Page)
+		ctx.OK(resp, traceID, traces, ctx.Page)
 	}
 }
 
@@ -140,7 +140,7 @@ func newGinWSServiceHandler[T any](engine *Engine, handler WSHandler[T]) gin.Han
 		}
 		err1 := handlerSetup.Service(ctx, ws)
 		if err != nil {
-			ctx.Error(err1, nil)
+			ctx.Error(err1, "", nil)
 		}
 	}
 }
@@ -155,7 +155,7 @@ func joinMiddlewareAndService(service gin.HandlerFunc, middleware ...gin.Handler
 }
 
 func GetTraceID(c *gin.Context) string {
-	traceID := c.GetHeader("Micro-TraceID")
+	traceID := c.GetHeader(MICRO_HEADER_TRACE_ID)
 	if traceID == "" {
 		return uuid.NewString()
 	}
@@ -163,12 +163,12 @@ func GetTraceID(c *gin.Context) string {
 }
 
 func SetTraceID(c *gin.Context, traceID string) {
-	c.Request.Header.Set("Micro-TraceID", traceID)
+	c.Request.Header.Set(MICRO_HEADER_TRACE_ID, traceID)
 }
 
 func GetTraces(c *gin.Context) []Trace {
 	var traces []Trace
-	traceHeader := c.GetHeader("Micro-Traces")
+	traceHeader := c.GetHeader(MICRO_HEADER_TRACES)
 	if traceHeader != "" {
 		_ = json.Unmarshal([]byte(traceHeader), &traces)
 	}
@@ -177,11 +177,7 @@ func GetTraces(c *gin.Context) []Trace {
 
 func SetTraces(c *gin.Context, traces []Trace) {
 	b, _ := json.Marshal(traces)
-	c.Request.Header.Set("Micro-Traces", string(b))
-}
-
-func GetWorkspaceID(c *gin.Context) string {
-	return c.GetHeader("Micro-WorkspaceID")
+	c.Request.Header.Set(MICRO_HEADER_TRACES, string(b))
 }
 
 type MicroInfo struct {

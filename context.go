@@ -79,7 +79,7 @@ func (ctx *Context[T]) UserAgent() string {
 	return ctx.GinContext.Request.UserAgent()
 }
 
-func (ctx *Context[T]) OK(data interface{}, traces []Trace, page ...*sql.Pagination) {
+func (ctx *Context[T]) OK(data interface{}, traceID string, traces []Trace, page ...*sql.Pagination) {
 	var p *sql.Pagination
 	if len(page) > 0 {
 		p = page[0]
@@ -88,20 +88,22 @@ func (ctx *Context[T]) OK(data interface{}, traces []Trace, page ...*sql.Paginat
 		Success:    true,
 		Data:       data,
 		Pagination: p,
+		TraceID:    traceID,
 		Traces:     traces,
 	}
 	ctx.Response = resp // for testing
 	ctx.GinContext.JSON(200, resp)
 }
 
-func (ctx *Context[T]) Error(err Error, traces []Trace) {
+func (ctx *Context[T]) Error(err Error, traceID string, traces []Trace) {
 	resp := &Response{
 		Success: false,
 		Error: &ResponseError{
 			Code:    err.Code(),
 			Message: err.Error(),
 		},
-		Traces: traces,
+		TraceID: traceID,
+		Traces:  traces,
 	}
 	ctx.Response = resp // for testing
 	ctx.GinContext.JSON(200, resp)

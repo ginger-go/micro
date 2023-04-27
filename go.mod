@@ -7,6 +7,7 @@ require (
 	github.com/gin-contrib/cache v1.2.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
+	github.com/ginger-go/env v1.1.0
 	github.com/ginger-go/sql v1.0.7
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
