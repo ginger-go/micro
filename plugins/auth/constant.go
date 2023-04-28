@@ -1,5 +1,7 @@
 package auth
 
+import "github.com/ginger-go/env"
+
 // AUTH_SERVICE_IP is the IP address of the auth service
 // Please set it to the environment variable AUTH_SERVICE_IP
 var AUTH_SERVICE_IP string
@@ -35,3 +37,14 @@ var API_UUID_MAP = make(map[string]string)
 // This map is recorded the subscription usage
 // This map will send to the usage service periodically
 var SUBSCRIPTION_USAGE_MAP = make(map[string]int64)
+
+func init() {
+	SYSTEM_ID = env.String("SYSTEM_ID", "")
+	if SYSTEM_ID == "" {
+		panic("SYSTEM_ID is empty")
+	}
+	SYSTEM_NAME = env.String("SYSTEM_NAME", "")
+	if SYSTEM_NAME == "" {
+		panic("SYSTEM_NAME is empty")
+	}
+}

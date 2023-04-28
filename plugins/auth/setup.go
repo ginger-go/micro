@@ -18,16 +18,6 @@ func SetupAuthService(engine *micro.Engine) {
 		panic("AUTH_SERVICE_IP is not set") // must set AUTH_SERVICE_IP
 	}
 
-	// Setup system id and name
-	SYSTEM_ID = env.String("SYSTEM_ID", "")
-	if SYSTEM_ID == "" {
-		panic("SYSTEM_ID is not set") // must set SYSTEM_ID
-	}
-	SYSTEM_NAME = env.String("SYSTEM_NAME", "")
-	if SYSTEM_NAME == "" {
-		panic("SYSTEM_NAME is not set") // must set SYSTEM_NAME
-	}
-
 	// This api is called by public to get the system info
 	engine.GinEngine.GET("/micro/info", getSystemInfoHandler, midware.RateLimited(time.Minute, 30))
 
