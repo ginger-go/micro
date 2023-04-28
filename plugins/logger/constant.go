@@ -1,5 +1,9 @@
 package logger
 
+// LOG_SERVICE_IP is the IP address of the auth service
+// Please set it to the environment variable LOG_SERVICE_IP
+var LOG_SERVICE_IP string
+
 // This is the folder where the logs will be stored
 var LOG_FOLDER = "./logs"
 
