@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/robfig/cron v1.2.0
 	github.com/ulule/limiter/v3 v3.11.1
+	gorm.io/gorm v1.24.6
 )
 
 require (
@@ -50,5 +51,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.4.7 // indirect
 	gorm.io/driver/sqlite v1.4.4 // indirect
-	gorm.io/gorm v1.24.6 // indirect
 )
