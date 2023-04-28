@@ -69,6 +69,10 @@ func GetSystemID() string {
 	return SYSTEM_ID
 }
 
+func GetSystemName() string {
+	return SYSTEM_NAME
+}
+
 func GetApiUUID(c *gin.Context) string {
 	method := c.Request.Method
 	path := c.Request.URL.Path
