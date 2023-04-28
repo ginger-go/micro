@@ -1,7 +1,7 @@
 package auth
 
 type AuthPublicPem struct {
-	SystemPem string `json:"token_pem"`
+	SystemPem string `json:"system_pem"`
 	UserPem   string `json:"user_pem"`
 }
 
