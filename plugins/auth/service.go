@@ -24,6 +24,18 @@ func initApiMap(engine *micro.Engine) {
 	}
 }
 
+// service will call the auth service to get the jwt public pem at the beginning
+func initPublicPem(engine *micro.Engine) {
+	resp, err := apicall.GET[AuthPublicPem](AUTH_SERVICE_IP+"/micro/token", nil, map[string]string{
+		"Authorization": "Bearer " + SYSTEM_TOKEN,
+	}, "", nil)
+	if err != nil {
+		panic("failed to initialize service")
+	}
+	SYSTEM_TOKEN_PUBLIC_PEM = resp.Data.SystemPem
+	USER_TOKEN_PUBLIC_PEM = resp.Data.UserPem
+}
+
 func GetSystemID() string {
 	return SYSTEM_ID
 }

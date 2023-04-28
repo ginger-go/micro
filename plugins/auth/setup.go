@@ -37,4 +37,7 @@ func SetupAuthService(engine *micro.Engine) {
 
 	// This is init func for initialize the api uuid map
 	initApiMap(engine)
+
+	// This is init func for initialize the public pem
+	initPublicPem(engine)
 }
