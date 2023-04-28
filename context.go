@@ -14,7 +14,7 @@ type Trace struct {
 	SystemID   string        `json:"system_id"`
 	SystemName string        `json:"system_name"`
 	TraceID    string        `json:"trace_id"`
-	Error      ResponseError `json:"error"`
+	Error      ResponseError `json:"error,omitempty"`
 }
 
 type Context[T any] struct {
