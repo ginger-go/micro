@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/ginger-go/micro"
 	"github.com/ginger-go/micro/plugins/apicall"
 )
@@ -21,4 +22,14 @@ func initApiMap(engine *micro.Engine) {
 	for k, v := range *resp.Data {
 		API_UUID_MAP[k] = v
 	}
+}
+
+func GetSystemID() string {
+	return SYSTEM_ID
+}
+
+func GetApiUUID(c *gin.Context) string {
+	method := c.Request.Method
+	path := c.Request.URL.Path
+	return API_UUID_MAP[method+":"+path]
 }

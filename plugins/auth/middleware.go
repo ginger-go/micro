@@ -64,9 +64,8 @@ func LoginRequired(ctx *gin.Context) {
 		}
 	}
 
-	requestTag := ctx.Request.Method + ":" + ctx.Request.URL.Path
-	apiUUID, ok := API_UUID_MAP[requestTag]
-	if apiUUID == "" || !ok {
+	apiUUID := GetApiUUID(ctx)
+	if apiUUID == "" {
 		ctx.AbortWithStatusJSON(403, micro.Response{
 			Success: false,
 			Error: &micro.ResponseError{
