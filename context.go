@@ -9,12 +9,12 @@ import (
 )
 
 type Trace struct {
-	Success    bool          `json:"success"`
-	Time       time.Time     `json:"time"`
-	SystemID   string        `json:"system_id"`
-	SystemName string        `json:"system_name"`
-	TraceID    string        `json:"trace_id"`
-	Error      ResponseError `json:"error,omitempty"`
+	Success    bool           `json:"success"`
+	Time       time.Time      `json:"time"`
+	SystemID   string         `json:"system_id"`
+	SystemName string         `json:"system_name"`
+	TraceID    string         `json:"trace_id"`
+	Error      *ResponseError `json:"error,omitempty"`
 }
 
 type Context[T any] struct {

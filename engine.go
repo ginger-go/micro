@@ -98,7 +98,7 @@ func newGinServiceHandler[T any](engine *Engine, handler Handler[T]) gin.Handler
 				Time:       time.Now(),
 				SystemID:   engine.SystemID,
 				SystemName: engine.SystemName,
-				Error: ResponseError{
+				Error: &ResponseError{
 					Code:    err.Code(),
 					Message: err.Error(),
 				},
