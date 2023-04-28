@@ -2,6 +2,10 @@ package micro
 
 var errMap = make(map[interface{}]string)
 
+func RegisterError(uuid string, message string) {
+	errMap[uuid] = message
+}
+
 type Error interface {
 	Code() string
 	Error() string
