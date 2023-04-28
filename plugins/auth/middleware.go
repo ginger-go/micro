@@ -112,6 +112,20 @@ func LoginRequired(ctx *gin.Context) {
 		}
 	}
 
+	subscriptionUUID := checkUserIsAllowed(claims.UUID, GetApiUUID(ctx))
+	if subscriptionUUID == "" {
+		ctx.AbortWithStatusJSON(403, micro.Response{
+			Success: false,
+			Error: &micro.ResponseError{
+				Code:    ERR_CODE_FORBIDDEN,
+				Message: ERR_MSG_FORBIDDEN,
+			},
+			TraceID: traceID,
+			Traces:  traces,
+		})
+		return
+	}
+
 	// for api token
 	if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		// if the api token has been restricted to a specific ip, then check the ip
@@ -128,6 +142,12 @@ func LoginRequired(ctx *gin.Context) {
 			return
 		}
 		if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
+			_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
+			if !ok {
+				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
+			} else {
+				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
+			}
 			ctx.Next()
 			return
 		}
@@ -160,6 +180,12 @@ func LoginRequired(ctx *gin.Context) {
 			return
 		}
 		if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
+			_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
+			if !ok {
+				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
+			} else {
+				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
+			}
 			ctx.Next()
 			return
 		}

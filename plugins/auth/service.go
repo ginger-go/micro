@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ginger-go/micro"
 	"github.com/ginger-go/micro/plugins/apicall"
@@ -34,6 +36,33 @@ func initPublicPem(engine *micro.Engine) {
 	}
 	SYSTEM_TOKEN_PUBLIC_PEM = resp.Data.SystemPem
 	USER_TOKEN_PUBLIC_PEM = resp.Data.UserPem
+}
+
+func checkUserIsAllowed(userUUID, apiUUID string) (subscriptionUUID string) {
+	resp, err := apicall.GET[CheckUserIsAllowedResponse](USAGE_SERVICE_IP+"/micro/usage", map[string]string{
+		"userUUID": userUUID,
+		"apiUUID":  apiUUID,
+	}, map[string]string{}, "", nil)
+	if err != nil {
+		log.Println("failed to check user is allowed", err)
+		return ""
+	}
+	return resp.Data.SubscriptionUUID
+}
+
+func sendUsageCron() {
+	m := make(map[string]int64)
+	for k, v := range SUBSCRIPTION_USAGE_MAP {
+		m[k] = v
+	}
+	SUBSCRIPTION_USAGE_MAP = make(map[string]int64)
+	_, err := apicall.POST[struct{}](USAGE_SERVICE_IP+"/micro/usage", m, map[string]string{
+		"Authorization": "Bearer " + SYSTEM_TOKEN,
+	}, "", nil)
+	if err != nil {
+		log.Println("failed to send usage", err)
+		return
+	}
 }
 
 func GetSystemID() string {

@@ -4,6 +4,10 @@ package auth
 // Please set it to the environment variable AUTH_SERVICE_IP
 var AUTH_SERVICE_IP string
 
+// USAGE_SERVICE_IP is the IP address of the usage service
+// Please set it to the environment variable USAGE_SERVICE_IP
+var USAGE_SERVICE_IP string
+
 // These public pem are used to verify the jwt token
 var USER_TOKEN_PUBLIC_PEM string
 var SYSTEM_TOKEN_PUBLIC_PEM string
@@ -27,3 +31,7 @@ const (
 
 // This map is recorded the api and its uuid, which is determined by the auth service
 var API_UUID_MAP = make(map[string]string)
+
+// This map is recorded the subscription usage
+// This map will send to the usage service periodically
+var SUBSCRIPTION_USAGE_MAP = make(map[string]int64)

@@ -35,6 +35,9 @@ func SetupAuthService(engine *micro.Engine) {
 	// The public pem is used to verify the jwt token
 	engine.GinEngine.POST("/micro/token", updatePublicPemHandler, midware.RateLimited(time.Minute, 30), AuthServiceOnly)
 
+	// This cron will send the usage to the usage service every minute
+	micro.Cron(engine, "0 * * * * *", sendUsageCron)
+
 	// This is init func for initialize the api uuid map
 	initApiMap(engine)
 

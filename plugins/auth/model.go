@@ -9,3 +9,7 @@ type SystemInfo struct {
 	UUID string `json:"uuid"`
 	Name string `json:"name"`
 }
+
+type CheckUserIsAllowedResponse struct {
+	SubscriptionUUID string `json:"subscription_uuid"`
+}
