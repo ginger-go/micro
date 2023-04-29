@@ -172,6 +172,9 @@ func GetTraces(c *gin.Context) []Trace {
 	if traceHeader != "" {
 		_ = json.Unmarshal([]byte(traceHeader), &traces)
 	}
+	if len(traces) == 0 {
+		traces = make([]Trace, 0)
+	}
 	return traces
 }
 

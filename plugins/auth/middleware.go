@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ginger-go/micro"
 	"github.com/ginger-go/micro/plugins/jwt"
@@ -8,18 +10,8 @@ import (
 
 // Only allow the auth service to access this api
 func AuthServiceOnly(ctx *gin.Context) {
-	traceID := micro.GetTraceID(ctx)
-	traces := micro.GetTraces(ctx)
 	if ctx.ClientIP() != AUTH_SERVICE_IP {
-		ctx.AbortWithStatusJSON(401, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_UNAUTHORIZED,
-				Message: ERR_MSG_UNAUTHORIZED,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortUnauthorized(ctx)
 		return
 	}
 	ctx.Next()
@@ -27,19 +19,9 @@ func AuthServiceOnly(ctx *gin.Context) {
 
 // Only allow to access with system token, user token or api token
 func LoginRequired(ctx *gin.Context) {
-	traceID := micro.GetTraceID(ctx)
-	traces := micro.GetTraces(ctx)
 	token := GetAuthToken(ctx)
 	if token == "" {
-		ctx.AbortWithStatusJSON(401, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_UNAUTHORIZED,
-				Message: ERR_MSG_UNAUTHORIZED,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortUnauthorized(ctx)
 		return
 	}
 
@@ -51,44 +33,20 @@ func LoginRequired(ctx *gin.Context) {
 		// try to parse token with system token public key
 		claims, err = jwt.ParseWithPublicKey(token, SYSTEM_TOKEN_PUBLIC_PEM)
 		if err != nil || claims == nil {
-			ctx.AbortWithStatusJSON(401, micro.Response{
-				Success: false,
-				Error: &micro.ResponseError{
-					Code:    ERR_CODE_UNAUTHORIZED,
-					Message: ERR_MSG_UNAUTHORIZED,
-				},
-				TraceID: traceID,
-				Traces:  traces,
-			})
+			abortUnauthorized(ctx)
 			return
 		}
 	}
 
 	apiUUID := GetApiUUID(ctx)
 	if apiUUID == "" {
-		ctx.AbortWithStatusJSON(403, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_FORBIDDEN,
-				Message: ERR_MSG_FORBIDDEN,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortForbidden(ctx)
 		return
 	}
 
 	// for refresh token, it is never allowed to access any api
 	if claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
-		ctx.AbortWithStatusJSON(401, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_UNAUTHORIZED,
-				Message: ERR_MSG_UNAUTHORIZED,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortUnauthorized(ctx)
 		return
 	}
 
@@ -96,15 +54,7 @@ func LoginRequired(ctx *gin.Context) {
 	if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 		// the system token must be restricted to a specific ip
 		if ctx.ClientIP() != claims.IP {
-			ctx.AbortWithStatusJSON(401, micro.Response{
-				Success: false,
-				Error: &micro.ResponseError{
-					Code:    ERR_CODE_UNAUTHORIZED,
-					Message: ERR_MSG_UNAUTHORIZED,
-				},
-				TraceID: traceID,
-				Traces:  traces,
-			})
+			abortUnauthorized(ctx)
 			return
 		} else {
 			ctx.Next()
@@ -114,15 +64,7 @@ func LoginRequired(ctx *gin.Context) {
 
 	subscriptionUUID := checkUserIsAllowed(claims.UUID, GetApiUUID(ctx))
 	if subscriptionUUID == "" {
-		ctx.AbortWithStatusJSON(403, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_FORBIDDEN,
-				Message: ERR_MSG_FORBIDDEN,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortForbidden(ctx)
 		return
 	}
 
@@ -130,15 +72,7 @@ func LoginRequired(ctx *gin.Context) {
 	if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		// if the api token has been restricted to a specific ip, then check the ip
 		if claims.IP != "" && claims.IP != ctx.ClientIP() {
-			ctx.AbortWithStatusJSON(401, micro.Response{
-				Success: false,
-				Error: &micro.ResponseError{
-					Code:    ERR_CODE_UNAUTHORIZED,
-					Message: ERR_MSG_UNAUTHORIZED,
-				},
-				TraceID: traceID,
-				Traces:  traces,
-			})
+			abortUnauthorized(ctx)
 			return
 		}
 		if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
@@ -151,15 +85,7 @@ func LoginRequired(ctx *gin.Context) {
 			ctx.Next()
 			return
 		}
-		ctx.AbortWithStatusJSON(403, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_FORBIDDEN,
-				Message: ERR_MSG_FORBIDDEN,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortForbidden(ctx)
 		return
 	}
 
@@ -168,15 +94,7 @@ func LoginRequired(ctx *gin.Context) {
 		// the access token must be restricted to a specific ip
 		// it is supposed to refresh the access token if the ip is changed
 		if claims.IP != ctx.ClientIP() {
-			ctx.AbortWithStatusJSON(401, micro.Response{
-				Success: false,
-				Error: &micro.ResponseError{
-					Code:    ERR_CODE_UNAUTHORIZED,
-					Message: ERR_MSG_UNAUTHORIZED,
-				},
-				TraceID: traceID,
-				Traces:  traces,
-			})
+			abortUnauthorized(ctx)
 			return
 		}
 		if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
@@ -189,19 +107,45 @@ func LoginRequired(ctx *gin.Context) {
 			ctx.Next()
 			return
 		}
-		ctx.AbortWithStatusJSON(403, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_FORBIDDEN,
-				Message: ERR_MSG_FORBIDDEN,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
+		abortForbidden(ctx)
 		return
 	}
 
 	// unknown token type, should not happen
+	abortUnauthorized(ctx)
+}
+
+// Only allow to access with refresh token
+func RefreshTokenOnly(ctx *gin.Context) {
+	token := GetAuthToken(ctx)
+	if token == "" {
+		abortUnauthorized(ctx)
+		return
+	}
+
+	claims, err := jwt.ParseWithPublicKey(token, USER_TOKEN_PUBLIC_PEM)
+	if err != nil || claims == nil {
+		abortUnauthorized(ctx)
+		return
+	}
+
+	if claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		abortUnauthorized(ctx)
+		return
+	}
+}
+
+func abortUnauthorized(ctx *gin.Context) {
+	traceID := micro.GetTraceID(ctx)
+	traces := micro.GetTraces(ctx)
+	traces = append(traces, micro.Trace{
+		Success: false,
+		Time:    time.Now(),
+		Error: &micro.ResponseError{
+			Code:    ERR_CODE_UNAUTHORIZED,
+			Message: ERR_MSG_UNAUTHORIZED,
+		},
+	})
 	ctx.AbortWithStatusJSON(401, micro.Response{
 		Success: false,
 		Error: &micro.ResponseError{
@@ -213,48 +157,24 @@ func LoginRequired(ctx *gin.Context) {
 	})
 }
 
-// Only allow to access with refresh token
-func RefreshTokenOnly(ctx *gin.Context) {
+func abortForbidden(ctx *gin.Context) {
 	traceID := micro.GetTraceID(ctx)
 	traces := micro.GetTraces(ctx)
-	token := GetAuthToken(ctx)
-	if token == "" {
-		ctx.AbortWithStatusJSON(401, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_UNAUTHORIZED,
-				Message: ERR_MSG_UNAUTHORIZED,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
-		return
-	}
-
-	claims, err := jwt.ParseWithPublicKey(token, USER_TOKEN_PUBLIC_PEM)
-	if err != nil || claims == nil {
-		ctx.AbortWithStatusJSON(401, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_UNAUTHORIZED,
-				Message: ERR_MSG_UNAUTHORIZED,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
-		return
-	}
-
-	if claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
-		ctx.AbortWithStatusJSON(401, micro.Response{
-			Success: false,
-			Error: &micro.ResponseError{
-				Code:    ERR_CODE_UNAUTHORIZED,
-				Message: ERR_MSG_UNAUTHORIZED,
-			},
-			TraceID: traceID,
-			Traces:  traces,
-		})
-		return
-	}
+	traces = append(traces, micro.Trace{
+		Success: false,
+		Time:    time.Now(),
+		Error: &micro.ResponseError{
+			Code:    ERR_CODE_FORBIDDEN,
+			Message: ERR_MSG_FORBIDDEN,
+		},
+	})
+	ctx.AbortWithStatusJSON(403, micro.Response{
+		Success: false,
+		Error: &micro.ResponseError{
+			Code:    ERR_CODE_FORBIDDEN,
+			Message: ERR_MSG_FORBIDDEN,
+		},
+		TraceID: traceID,
+		Traces:  traces,
+	})
 }
