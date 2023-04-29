@@ -139,8 +139,11 @@ func abortUnauthorized(ctx *gin.Context) {
 	traceID := micro.GetTraceID(ctx)
 	traces := micro.GetTraces(ctx)
 	traces = append(traces, micro.Trace{
-		Success: false,
-		Time:    time.Now(),
+		Success:    false,
+		Time:       time.Now(),
+		SystemID:   SYSTEM_ID,
+		SystemName: SYSTEM_NAME,
+		TraceID:    traceID,
 		Error: &micro.ResponseError{
 			Code:    ERR_CODE_UNAUTHORIZED,
 			Message: ERR_MSG_UNAUTHORIZED,
@@ -161,8 +164,11 @@ func abortForbidden(ctx *gin.Context) {
 	traceID := micro.GetTraceID(ctx)
 	traces := micro.GetTraces(ctx)
 	traces = append(traces, micro.Trace{
-		Success: false,
-		Time:    time.Now(),
+		Success:    false,
+		Time:       time.Now(),
+		SystemID:   SYSTEM_ID,
+		SystemName: SYSTEM_NAME,
+		TraceID:    traceID,
 		Error: &micro.ResponseError{
 			Code:    ERR_CODE_FORBIDDEN,
 			Message: ERR_MSG_FORBIDDEN,
