@@ -34,7 +34,7 @@ func LoginRequired(ctx *gin.Context) {
 	// for system token, if the request is from the same ip as the token, then pass
 	if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 		// the system token must be restricted to a specific ip
-		if ctx.ClientIP() != claims.IP {
+		if !checkIP(ctx, claims) {
 			abortUnauthorized(ctx)
 			return
 		} else {
@@ -46,7 +46,7 @@ func LoginRequired(ctx *gin.Context) {
 	// for api token
 	if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		// if the api token has been restricted to a specific ip, then check the ip
-		if claims.IP != "" && claims.IP != ctx.ClientIP() {
+		if !checkIP(ctx, claims) {
 			abortUnauthorized(ctx)
 			return
 		}
@@ -56,7 +56,7 @@ func LoginRequired(ctx *gin.Context) {
 	if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN {
 		// the access token must be restricted to a specific ip
 		// it is supposed to refresh the access token if the ip is changed
-		if claims.IP != ctx.ClientIP() {
+		if !checkIP(ctx, claims) {
 			abortUnauthorized(ctx)
 			return
 		}
@@ -64,6 +64,31 @@ func LoginRequired(ctx *gin.Context) {
 
 	// unknown token type, should not happen
 	abortUnauthorized(ctx)
+}
+
+// Only allow to access with refresh token
+func RefreshTokenOnly(ctx *gin.Context) {
+	claims := getClaims(ctx)
+
+	if claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		abortUnauthorized(ctx)
+		return
+	}
+}
+
+// Only allow to access with system token
+func SystemTokenOnly(ctx *gin.Context) {
+	claims := getClaims(ctx)
+
+	if claims.TokenType != jwt.TOKEN_TYPE_SYSTEM_TOKEN {
+		abortUnauthorized(ctx)
+		return
+	}
+
+	if !checkIP(ctx, claims) {
+		abortUnauthorized(ctx)
+		return
+	}
 }
 
 // Only allow to access with enough usage
@@ -105,24 +130,11 @@ func UsageRequired(ctx *gin.Context) {
 	abortForbidden(ctx)
 }
 
-// Only allow to access with refresh token
-func RefreshTokenOnly(ctx *gin.Context) {
-	token := GetAuthToken(ctx)
-	if token == "" {
-		abortUnauthorized(ctx)
-		return
+func checkIP(ctx *gin.Context, claims *jwt.Claims) bool {
+	if claims.IP != "" && claims.IP != ctx.ClientIP() {
+		return false
 	}
-
-	claims, err := jwt.ParseWithPublicKey(token, USER_TOKEN_PUBLIC_PEM)
-	if err != nil || claims == nil {
-		abortUnauthorized(ctx)
-		return
-	}
-
-	if claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
-		abortUnauthorized(ctx)
-		return
-	}
+	return true
 }
 
 func getClaims(ctx *gin.Context) *jwt.Claims {
