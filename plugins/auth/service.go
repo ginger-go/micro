@@ -44,7 +44,28 @@ func initPublicPem(engine *micro.Engine) {
 	USER_TOKEN_PUBLIC_PEM = resp.Data.UserPem
 }
 
-func checkUserIsAllowed(userUUID, apiUUID string) (subscriptionUUID string) {
+func checkUserHasRight(authGroup []string, systemID string, apiUUID string) bool {
+	for _, authGroup := range authGroup {
+		resp, err := apicall.GET[GetAllowedApisResponse](AUTH_SERVICE_IP+"/micro/allowed-api", map[string]string{
+			"system_id":  systemID,
+			"auth_group": authGroup,
+		}, map[string]string{
+			"Authorization": "Bearer " + SYSTEM_TOKEN,
+		}, "", nil)
+		if err != nil {
+			log.Println("failed to check user has right", err)
+			continue
+		}
+		for _, api := range resp.Data.AllowedApis {
+			if api == apiUUID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func checkUserHasUsage(userUUID, apiUUID string) (subscriptionUUID string) {
 	resp, err := apicall.GET[CheckUserIsAllowedResponse](USAGE_SERVICE_IP+"/micro/usage", map[string]string{
 		"userUUID": userUUID,
 		"apiUUID":  apiUUID,

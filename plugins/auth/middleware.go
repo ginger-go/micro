@@ -56,7 +56,7 @@ func LoginRequired(ctx *gin.Context) {
 			abortUnauthorized(ctx)
 			return
 		}
-		if !claims.HasAPIRight(GetSystemID(), apiUUID) {
+		if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
 			abortForbidden(ctx)
 			return
 		}
@@ -72,7 +72,7 @@ func LoginRequired(ctx *gin.Context) {
 			abortUnauthorized(ctx)
 			return
 		}
-		if !claims.HasAPIRight(GetSystemID(), apiUUID) {
+		if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
 			abortForbidden(ctx)
 			return
 		}
@@ -134,23 +134,19 @@ func UsageRequired(ctx *gin.Context) {
 		return
 	}
 
-	subscriptionUUID := checkUserIsAllowed(claims.UUID, GetApiUUID(ctx))
+	subscriptionUUID := checkUserHasUsage(claims.UUID, GetApiUUID(ctx))
 	if subscriptionUUID == "" {
 		abortForbidden(ctx)
 		return
 	}
 
-	if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
-		_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
-		if !ok {
-			SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
-		} else {
-			SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
-		}
-		ctx.Next()
-		return
+	_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
+	if !ok {
+		SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
+	} else {
+		SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
 	}
-	abortForbidden(ctx)
+	ctx.Next()
 }
 
 func checkIP(ctx *gin.Context, claims *jwt.Claims) bool {

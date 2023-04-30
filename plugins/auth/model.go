@@ -22,3 +22,12 @@ type UpdateApiMapRequest struct {
 type UpdateApiMapResponse struct {
 	ApiUUIDMap map[string]string `json:"api_uuid_map"`
 }
+
+type GetAllowedApisRequest struct {
+	SystemID  string `form:"system_id"`
+	AuthGroup string `form:"auth_group"`
+}
+
+type GetAllowedApisResponse struct {
+	AllowedApis []string `json:"allowed_apis"`
+}
