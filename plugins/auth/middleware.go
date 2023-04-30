@@ -43,11 +43,21 @@ func LoginRequired(ctx *gin.Context) {
 		}
 	}
 
+	apiUUID := GetApiUUID(ctx)
+	if apiUUID == "" {
+		abortForbidden(ctx)
+		return
+	}
+
 	// for api token
 	if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		// if the api token has been restricted to a specific ip, then check the ip
 		if !checkIP(ctx, claims) {
 			abortUnauthorized(ctx)
+			return
+		}
+		if !claims.HasAPIRight(GetSystemID(), apiUUID) {
+			abortForbidden(ctx)
 			return
 		}
 	}
@@ -58,6 +68,10 @@ func LoginRequired(ctx *gin.Context) {
 		// it is supposed to refresh the access token if the ip is changed
 		if !checkIP(ctx, claims) {
 			abortUnauthorized(ctx)
+			return
+		}
+		if !claims.HasAPIRight(GetSystemID(), apiUUID) {
+			abortForbidden(ctx)
 			return
 		}
 	}
