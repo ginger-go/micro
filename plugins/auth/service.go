@@ -46,6 +46,9 @@ func initPublicPem(engine *micro.Engine) {
 
 func checkUserHasRight(authGroup []string, systemID string, apiUUID string) bool {
 	for _, authGroup := range authGroup {
+		if authGroup == "*" {
+			return true
+		}
 		resp, err := apicall.GET[GetAllowedApisResponse](AUTH_SERVICE_IP+"/micro/allowed-api", map[string]string{
 			"system_id":  systemID,
 			"auth_group": authGroup,
