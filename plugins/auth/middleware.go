@@ -19,7 +19,7 @@ func AuthServiceOnly(ctx *gin.Context) {
 
 // Only allow to access with system token, user token or api token
 func LoginRequired(ctx *gin.Context) {
-	claims := getClaims(ctx)
+	claims := GetClaims(ctx)
 	if claims == nil {
 		abortUnauthorized(ctx)
 		return
@@ -68,7 +68,7 @@ func LoginRequired(ctx *gin.Context) {
 
 // Only allow to access with refresh token
 func RefreshTokenOnly(ctx *gin.Context) {
-	claims := getClaims(ctx)
+	claims := GetClaims(ctx)
 
 	if claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
 		abortUnauthorized(ctx)
@@ -78,7 +78,7 @@ func RefreshTokenOnly(ctx *gin.Context) {
 
 // Only allow to access with system token
 func SystemTokenOnly(ctx *gin.Context) {
-	claims := getClaims(ctx)
+	claims := GetClaims(ctx)
 
 	if claims.TokenType != jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 		abortUnauthorized(ctx)
@@ -93,7 +93,7 @@ func SystemTokenOnly(ctx *gin.Context) {
 
 // Only allow to access with enough usage
 func UsageRequired(ctx *gin.Context) {
-	claims := getClaims(ctx)
+	claims := GetClaims(ctx)
 
 	if claims == nil || claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
 		abortUnauthorized(ctx)
@@ -137,7 +137,7 @@ func checkIP(ctx *gin.Context, claims *jwt.Claims) bool {
 	return true
 }
 
-func getClaims(ctx *gin.Context) *jwt.Claims {
+func GetClaims(ctx *gin.Context) *jwt.Claims {
 	token := GetAuthToken(ctx)
 	if token == "" {
 		return nil
