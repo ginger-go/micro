@@ -92,6 +92,11 @@ func RefreshTokenOnly(ctx *gin.Context) {
 
 // Only allow to access with system token
 func SystemTokenOnly(ctx *gin.Context) {
+	if ctx.ClientIP() == AUTH_SERVICE_IP { // allow auth service to access
+		ctx.Next()
+		return
+	}
+
 	claims := GetClaims(ctx)
 
 	if claims.TokenType != jwt.TOKEN_TYPE_SYSTEM_TOKEN {
