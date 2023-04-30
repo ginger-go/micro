@@ -87,8 +87,8 @@ func jwtTokenToClaims(token *jwt.Token) (*Claims, error) {
 	claims.IP = mapClaims["ip"].(string)
 	claims.TokenType = mapClaims["token_type"].(string)
 	claims.APIs = make(map[string]string)
-	for _, value := range mapClaims["apis"].(map[string]interface{}) {
-		claims.APIs[value.(string)] = value.(string)
+	for key, value := range mapClaims["apis"].(map[string]interface{}) {
+		claims.APIs[key] = value.(string)
 	}
 	claims.DataSets = make([]string, 0)
 	for _, value := range mapClaims["data_sets"].([]interface{}) {
