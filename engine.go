@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ginger-go/micro/plugins/midware"
 	"github.com/ginger-go/sql"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -49,6 +50,11 @@ func (e *Engine) Use(middleware ...gin.HandlerFunc) {
 
 func GET[T any](engine *Engine, route string, handler Handler[T], middleware ...gin.HandlerFunc) {
 	engine.GinEngine.GET(route, joinMiddlewareAndService(newGinServiceHandler(engine, handler), middleware...)...)
+}
+
+func GETWithCache[T any](engine *Engine, route string, cacheDuration time.Duration, handler Handler[T], middleware ...gin.HandlerFunc) {
+	engine.GinEngine.GET(route, joinMiddlewareAndService(
+		midware.Cache(cacheDuration, newGinServiceHandler(engine, handler)), middleware...)...)
 }
 
 func POST[T any](engine *Engine, route string, handler Handler[T], middleware ...gin.HandlerFunc) {
