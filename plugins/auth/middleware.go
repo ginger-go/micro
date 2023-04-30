@@ -60,6 +60,8 @@ func LoginRequired(ctx *gin.Context) {
 			abortForbidden(ctx)
 			return
 		}
+		ctx.Next()
+		return
 	}
 
 	// for access token
@@ -74,6 +76,8 @@ func LoginRequired(ctx *gin.Context) {
 			abortForbidden(ctx)
 			return
 		}
+		ctx.Next()
+		return
 	}
 
 	// unknown token type, should not happen
