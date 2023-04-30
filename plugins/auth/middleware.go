@@ -19,28 +19,9 @@ func AuthServiceOnly(ctx *gin.Context) {
 
 // Only allow to access with system token, user token or api token
 func LoginRequired(ctx *gin.Context) {
-	token := GetAuthToken(ctx)
-	if token == "" {
+	claims := getClaims(ctx)
+	if claims == nil {
 		abortUnauthorized(ctx)
-		return
-	}
-
-	var claims *jwt.Claims
-	var err error
-	// try to parse token with user token public key
-	claims, err = jwt.ParseWithPublicKey(token, USER_TOKEN_PUBLIC_PEM)
-	if err != nil || claims == nil {
-		// try to parse token with system token public key
-		claims, err = jwt.ParseWithPublicKey(token, SYSTEM_TOKEN_PUBLIC_PEM)
-		if err != nil || claims == nil {
-			abortUnauthorized(ctx)
-			return
-		}
-	}
-
-	apiUUID := GetApiUUID(ctx)
-	if apiUUID == "" {
-		abortForbidden(ctx)
 		return
 	}
 
@@ -62,12 +43,6 @@ func LoginRequired(ctx *gin.Context) {
 		}
 	}
 
-	subscriptionUUID := checkUserIsAllowed(claims.UUID, GetApiUUID(ctx))
-	if subscriptionUUID == "" {
-		abortForbidden(ctx)
-		return
-	}
-
 	// for api token
 	if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		// if the api token has been restricted to a specific ip, then check the ip
@@ -75,18 +50,6 @@ func LoginRequired(ctx *gin.Context) {
 			abortUnauthorized(ctx)
 			return
 		}
-		if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
-			_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
-			if !ok {
-				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
-			} else {
-				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
-			}
-			ctx.Next()
-			return
-		}
-		abortForbidden(ctx)
-		return
 	}
 
 	// for access token
@@ -97,22 +60,49 @@ func LoginRequired(ctx *gin.Context) {
 			abortUnauthorized(ctx)
 			return
 		}
-		if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
-			_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
-			if !ok {
-				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
-			} else {
-				SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
-			}
-			ctx.Next()
-			return
-		}
-		abortForbidden(ctx)
-		return
 	}
 
 	// unknown token type, should not happen
 	abortUnauthorized(ctx)
+}
+
+// Only allow to access with enough usage
+func UsageRequired(ctx *gin.Context) {
+	claims := getClaims(ctx)
+
+	if claims == nil || claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		abortUnauthorized(ctx)
+		return
+	}
+
+	if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
+		ctx.Next()
+		return
+	}
+
+	apiUUID := GetApiUUID(ctx)
+	if apiUUID == "" {
+		abortForbidden(ctx)
+		return
+	}
+
+	subscriptionUUID := checkUserIsAllowed(claims.UUID, GetApiUUID(ctx))
+	if subscriptionUUID == "" {
+		abortForbidden(ctx)
+		return
+	}
+
+	if claims.HasAPIRight(SYSTEM_ID, apiUUID) {
+		_, ok := SUBSCRIPTION_USAGE_MAP[subscriptionUUID]
+		if !ok {
+			SUBSCRIPTION_USAGE_MAP[subscriptionUUID] = 1
+		} else {
+			SUBSCRIPTION_USAGE_MAP[subscriptionUUID] += 1
+		}
+		ctx.Next()
+		return
+	}
+	abortForbidden(ctx)
 }
 
 // Only allow to access with refresh token
@@ -133,6 +123,27 @@ func RefreshTokenOnly(ctx *gin.Context) {
 		abortUnauthorized(ctx)
 		return
 	}
+}
+
+func getClaims(ctx *gin.Context) *jwt.Claims {
+	token := GetAuthToken(ctx)
+	if token == "" {
+		return nil
+	}
+
+	var claims *jwt.Claims
+	var err error
+	// try to parse token with user token public key
+	claims, err = jwt.ParseWithPublicKey(token, USER_TOKEN_PUBLIC_PEM)
+	if err != nil || claims == nil {
+		// try to parse token with system token public key
+		claims, err = jwt.ParseWithPublicKey(token, SYSTEM_TOKEN_PUBLIC_PEM)
+		if err != nil || claims == nil {
+			return nil
+		}
+	}
+
+	return claims
 }
 
 func abortUnauthorized(ctx *gin.Context) {
