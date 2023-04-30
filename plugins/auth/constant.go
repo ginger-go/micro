@@ -47,4 +47,8 @@ func init() {
 	if SYSTEM_NAME == "" {
 		panic("SYSTEM_NAME is empty")
 	}
+	SYSTEM_TOKEN = env.String("SYSTEM_TOKEN", "")
+	if SYSTEM_TOKEN == "" {
+		panic("SYSTEM_TOKEN is empty")
+	}
 }
