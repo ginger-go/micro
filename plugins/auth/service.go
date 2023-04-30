@@ -15,13 +15,19 @@ func initApiMap(engine *micro.Engine) {
 	for _, routeInfo := range routeInfos {
 		routes = append(routes, routeInfo.Method+":"+routeInfo.Path)
 	}
-	resp, err := apicall.POST[map[string]string](AUTH_SERVICE_IP+"/micro/api-map", routes, map[string]string{
+	resp, err := apicall.POST[UpdateApiMapResponse](AUTH_SERVICE_IP+"/micro/api-map", &UpdateApiMapRequest{
+		SystemInfo: &SystemInfo{
+			UUID: SYSTEM_ID,
+			Name: SYSTEM_NAME,
+		},
+		Routes: routes,
+	}, map[string]string{
 		"Authorization": "Bearer " + SYSTEM_TOKEN,
 	}, "", nil)
 	if err != nil {
 		panic("failed to initialize service")
 	}
-	for k, v := range *resp.Data {
+	for k, v := range resp.Data.ApiUUIDMap {
 		API_UUID_MAP[k] = v
 	}
 }

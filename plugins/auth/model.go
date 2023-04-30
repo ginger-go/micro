@@ -13,3 +13,12 @@ type SystemInfo struct {
 type CheckUserIsAllowedResponse struct {
 	SubscriptionUUID string `json:"subscription_uuid"`
 }
+
+type UpdateApiMapRequest struct {
+	SystemInfo *SystemInfo `json:"system_info"`
+	Routes     []string    `json:"routes"`
+}
+
+type UpdateApiMapResponse struct {
+	ApiUUIDMap map[string]string `json:"api_uuid_map"`
+}
