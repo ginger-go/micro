@@ -164,7 +164,7 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 func RefreshTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
 
-	if claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
+	if claims == nil || claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
 		abortUnauthorized(ctx)
 		return
 	}
@@ -179,7 +179,7 @@ func SystemTokenOnly(ctx *gin.Context) {
 
 	claims := GetClaims(ctx)
 
-	if claims.TokenType != jwt.TOKEN_TYPE_SYSTEM_TOKEN {
+	if claims == nil || claims.TokenType != jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 		abortUnauthorized(ctx)
 		return
 	}
