@@ -37,3 +37,13 @@ func (c *Claims) Set(key string, value interface{}) {
 func (c *Claims) Get(key string) interface{} {
 	return c.Data[key]
 }
+
+// HasWorkspace checks if the Claims has the workspace.
+func (c *Claims) HasWorkspace(workspaceUUID string) bool {
+	for _, workspace := range c.Workspaces {
+		if workspace == workspaceUUID {
+			return true
+		}
+	}
+	return false
+}
