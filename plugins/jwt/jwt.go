@@ -19,9 +19,10 @@ func Issue(claims *Claims, privKeyPem string, ttl time.Duration) (string, error)
 	mapClaims["uuid"] = claims.UUID
 	mapClaims["name"] = claims.Name
 	mapClaims["ip"] = claims.IP
+	mapClaims["is_root"] = claims.IsRoot
 	mapClaims["token_type"] = claims.TokenType
 	mapClaims["auth_groups"] = claims.AuthGroup
-	mapClaims["data_sets"] = claims.DataSets
+	mapClaims["workspaces"] = claims.Workspaces
 	mapClaims["data"] = claims.Data
 	mapClaims["iat"] = now.Unix()
 	mapClaims["exp"] = now.Add(ttl).Unix()
@@ -90,9 +91,9 @@ func jwtTokenToClaims(token *jwt.Token) (*Claims, error) {
 	for _, value := range mapClaims["auth_groups"].([]interface{}) {
 		claims.AuthGroup = append(claims.AuthGroup, value.(string))
 	}
-	claims.DataSets = make([]string, 0)
-	for _, value := range mapClaims["data_sets"].([]interface{}) {
-		claims.DataSets = append(claims.DataSets, value.(string))
+	claims.Workspaces = make([]string, 0)
+	for _, value := range mapClaims["workspaces"].([]interface{}) {
+		claims.Workspaces = append(claims.Workspaces, value.(string))
 	}
 
 	return claims, nil

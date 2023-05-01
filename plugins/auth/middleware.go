@@ -17,8 +17,8 @@ func AuthServiceOnly(ctx *gin.Context) {
 	ctx.Next()
 }
 
-// Only allow to access with system token, user token or api token
-func LoginRequired(ctx *gin.Context) {
+// Only allow to access with root user token, root user api token or system token
+func RootUserTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
 	if claims == nil {
 		abortUnauthorized(ctx)
@@ -43,45 +43,84 @@ func LoginRequired(ctx *gin.Context) {
 		}
 	}
 
-	apiUUID := GetApiUUID(ctx)
-	if apiUUID == "" {
-		abortForbidden(ctx)
-		return
-	}
-
-	// for api token
-	if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
-		// if the api token has been restricted to a specific ip, then check the ip
-		if !checkIP(ctx, claims) {
+	if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN || claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
+		if !claims.IsRoot {
 			abortUnauthorized(ctx)
 			return
 		}
-		if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
-			abortForbidden(ctx)
-			return
-		}
-		ctx.Next()
-		return
 	}
 
-	// for access token
-	if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN {
-		// the access token must be restricted to a specific ip
-		// it is supposed to refresh the access token if the ip is changed
-		if !checkIP(ctx, claims) {
+	ctx.Next()
+}
+
+// Only allow to access with system token, user token or api token
+func LoginRequired(ctx *gin.Context, Method string, Path string) gin.HandlerFunc {
+	API_UUID_MAP[Method+":"+Path] = ""
+	return func(ctx *gin.Context) {
+		claims := GetClaims(ctx)
+		if claims == nil {
 			abortUnauthorized(ctx)
 			return
 		}
-		if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
+
+		// for refresh token, it is never allowed to access any api
+		if claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
+			abortUnauthorized(ctx)
+			return
+		}
+
+		// for system token, if the request is from the same ip as the token, then pass
+		if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
+			// the system token must be restricted to a specific ip
+			if !checkIP(ctx, claims) {
+				abortUnauthorized(ctx)
+				return
+			} else {
+				ctx.Next()
+				return
+			}
+		}
+
+		apiUUID := GetApiUUID(ctx)
+		if apiUUID == "" {
 			abortForbidden(ctx)
 			return
 		}
-		ctx.Next()
-		return
-	}
 
-	// unknown token type, should not happen
-	abortUnauthorized(ctx)
+		// for api token
+		if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
+			// if the api token has been restricted to a specific ip, then check the ip
+			if !checkIP(ctx, claims) {
+				abortUnauthorized(ctx)
+				return
+			}
+			if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
+				abortForbidden(ctx)
+				return
+			}
+			ctx.Next()
+			return
+		}
+
+		// for access token
+		if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN {
+			// the access token must be restricted to a specific ip
+			// it is supposed to refresh the access token if the ip is changed
+			if !checkIP(ctx, claims) {
+				abortUnauthorized(ctx)
+				return
+			}
+			if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
+				abortForbidden(ctx)
+				return
+			}
+			ctx.Next()
+			return
+		}
+
+		// unknown token type, should not happen
+		abortUnauthorized(ctx)
+	}
 }
 
 // Only allow to access with refresh token
