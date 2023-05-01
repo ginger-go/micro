@@ -11,7 +11,7 @@ import (
 
 // Only allow the auth service to access this api
 func AuthServiceOnly(ctx *gin.Context) {
-	if ctx.ClientIP() != AUTH_SERVICE_IP {
+	if ctx.ClientIP() != strings.ReplaceAll(strings.ReplaceAll(strings.Split(AUTH_SERVICE_IP, ":")[0], "https://", ""), "http://", "") {
 		abortUnauthorized(ctx)
 		return
 	}
@@ -172,7 +172,7 @@ func RefreshTokenOnly(ctx *gin.Context) {
 
 // Only allow to access with system token
 func SystemTokenOnly(ctx *gin.Context) {
-	if ctx.ClientIP() == AUTH_SERVICE_IP { // allow auth service to access
+	if ctx.ClientIP() == strings.ReplaceAll(strings.ReplaceAll(strings.Split(AUTH_SERVICE_IP, ":")[0], "https://", ""), "http://", "") { // allow auth service to access
 		ctx.Next()
 		return
 	}
