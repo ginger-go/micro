@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/ginger-go/micro"
+	"github.com/ginger-go/micro/plugins/auth"
+	"github.com/ginger-go/micro/plugins/logger"
 	"github.com/mackerelio/go-osstat/cpu"
 	"github.com/mackerelio/go-osstat/memory"
 )
@@ -18,7 +20,7 @@ func MonitorMemory(e *micro.Engine, alertPercent float64, alertFunc func()) {
 			return
 		}
 		if float64(m.Used)/float64(m.Total) > alertPercent {
-			log.Println("memory used percent alert: ", float64(m.Used)/float64(m.Total))
+			logger.Error(auth.GetSystemID(), "", "", "memory used percent alert: ", float64(m.Used)/float64(m.Total))
 			alertFunc()
 		}
 	})
@@ -34,7 +36,7 @@ func MonitorCPU(e *micro.Engine, alertPercent float64, alertFunc func()) {
 			return
 		}
 		if float64(c.User+c.System)/float64(c.Total) > alertPercent {
-			log.Println("cpu used percent alert: ", float64(c.User+c.System)/float64(c.Total))
+			logger.Error(auth.GetSystemID(), "", "", "cpu used percent alert: ", float64(c.User+c.System)/float64(c.Total))
 			alertFunc()
 		}
 	})
