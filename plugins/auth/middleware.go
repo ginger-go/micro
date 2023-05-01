@@ -54,7 +54,7 @@ func RootUserTokenOnly(ctx *gin.Context) {
 }
 
 // Only allow to access with system token, user token or api token
-func LoginRequired(ctx *gin.Context, Method string, Path string) gin.HandlerFunc {
+func LoginRequired(Method string, Path string) gin.HandlerFunc {
 	API_UUID_MAP[Method+":"+Path] = ""
 	return func(ctx *gin.Context) {
 		claims := GetClaims(ctx)
