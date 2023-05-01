@@ -17,6 +17,42 @@ func AuthServiceOnly(ctx *gin.Context) {
 	ctx.Next()
 }
 
+// Only allow to access with admin token, admin api token or system token
+func AdminTokenOnly(ctx *gin.Context) {
+	claims := GetClaims(ctx)
+	if claims == nil {
+		abortUnauthorized(ctx)
+		return
+	}
+
+	// for refresh token, it is never allowed to access any api
+	if claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		abortUnauthorized(ctx)
+		return
+	}
+
+	// for system token, if the request is from the same ip as the token, then pass
+	if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
+		// the system token must be restricted to a specific ip
+		if !checkIP(ctx, claims) {
+			abortUnauthorized(ctx)
+			return
+		} else {
+			ctx.Next()
+			return
+		}
+	}
+
+	if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN || claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
+		if !claims.IsAdmin {
+			abortUnauthorized(ctx)
+			return
+		}
+	}
+
+	ctx.Next()
+}
+
 // Only allow to access with root user token, root user api token or system token
 func RootUserTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
