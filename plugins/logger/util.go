@@ -34,6 +34,6 @@ type loggerInterface interface {
 }
 
 func print(logger loggerInterface, systemID, apiUUID, traceID string, level string, v ...any) {
-	logger.SetPrefix(fmt.Sprintf("[%s] (%s/%s@%s) ", LOG_LEVEL_INFO, systemID, apiUUID, traceID))
+	logger.SetPrefix(fmt.Sprintf("[%s] (%s/%s@%s) ", level, systemID, apiUUID, traceID))
 	logger.Println(v...)
 }
