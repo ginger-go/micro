@@ -104,6 +104,6 @@ func GetSystemName() string {
 
 func GetApiUUID(c *gin.Context) string {
 	method := c.Request.Method
-	path := c.Request.URL.Path
+	path := c.FullPath()
 	return API_UUID_MAP[method+":"+path]
 }
