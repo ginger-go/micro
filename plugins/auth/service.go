@@ -54,7 +54,7 @@ func checkUserHasRight(authGroup []string, systemID string, apiUUID string) bool
 		}, map[string]string{
 			"Authorization": "Bearer " + SYSTEM_TOKEN,
 		}, "", nil)
-		if err != nil {
+		if err != nil || !resp.Success {
 			log.Println("failed to check user has right", err)
 			continue
 		}
