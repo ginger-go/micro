@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -225,7 +226,7 @@ func UsageRequired(ctx *gin.Context) {
 }
 
 func checkIP(ctx *gin.Context, claims *jwt.Claims) bool {
-	if claims.IP != "" && claims.IP != ctx.ClientIP() {
+	if claims.IP != "" && strings.Split(claims.IP, ":")[0] != ctx.ClientIP() {
 		return false
 	}
 	return true
