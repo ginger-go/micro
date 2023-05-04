@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 // Only allow the auth service to access this api
 func AuthServiceOnly(ctx *gin.Context) {
 	if ctx.ClientIP() != strings.ReplaceAll(strings.ReplaceAll(strings.Split(AUTH_SERVICE_IP, ":")[0], "https://", ""), "http://", "") {
+		log.Println("AuthServiceOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
@@ -22,12 +24,14 @@ func AuthServiceOnly(ctx *gin.Context) {
 func AdminTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
 	if claims == nil {
+		log.Println("AdminTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
 
 	// for refresh token, it is never allowed to access any api
 	if claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		log.Println("AdminTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
@@ -36,6 +40,7 @@ func AdminTokenOnly(ctx *gin.Context) {
 	if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 		// the system token must be restricted to a specific ip
 		if !checkIP(ctx, claims) {
+			log.Println("AdminTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 			abortUnauthorized(ctx)
 			return
 		} else {
@@ -46,6 +51,7 @@ func AdminTokenOnly(ctx *gin.Context) {
 
 	if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN || claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		if !claims.IsAdmin {
+			log.Println("AdminTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 			abortUnauthorized(ctx)
 			return
 		}
@@ -58,12 +64,14 @@ func AdminTokenOnly(ctx *gin.Context) {
 func RootUserTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
 	if claims == nil {
+		log.Println("RootUserTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
 
 	// for refresh token, it is never allowed to access any api
 	if claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		log.Println("RootUserTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
@@ -72,6 +80,7 @@ func RootUserTokenOnly(ctx *gin.Context) {
 	if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 		// the system token must be restricted to a specific ip
 		if !checkIP(ctx, claims) {
+			log.Println("RootUserTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 			abortUnauthorized(ctx)
 			return
 		} else {
@@ -82,6 +91,7 @@ func RootUserTokenOnly(ctx *gin.Context) {
 
 	if claims.TokenType == jwt.TOKEN_TYPE_ACCESS_TOKEN || claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 		if !claims.IsRoot {
+			log.Println("RootUserTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 			abortUnauthorized(ctx)
 			return
 		}
@@ -96,12 +106,14 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		claims := GetClaims(ctx)
 		if claims == nil {
+			log.Println("LoginRequired: unauthorized access from ip: ", ctx.ClientIP())
 			abortUnauthorized(ctx)
 			return
 		}
 
 		// for refresh token, it is never allowed to access any api
 		if claims.TokenType == jwt.TOKEN_TYPE_REFRESH_TOKEN {
+			log.Println("LoginRequired: unauthorized access from ip: ", ctx.ClientIP())
 			abortUnauthorized(ctx)
 			return
 		}
@@ -110,6 +122,7 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 		if claims.TokenType == jwt.TOKEN_TYPE_SYSTEM_TOKEN {
 			// the system token must be restricted to a specific ip
 			if !checkIP(ctx, claims) {
+				log.Println("LoginRequired: unauthorized access from ip: ", ctx.ClientIP())
 				abortUnauthorized(ctx)
 				return
 			} else {
@@ -120,6 +133,7 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 
 		apiUUID := GetApiUUID(ctx)
 		if apiUUID == "" {
+			log.Println("LoginRequired: forbidden access from ip: ", ctx.ClientIP())
 			abortForbidden(ctx)
 			return
 		}
@@ -128,10 +142,12 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 		if claims.TokenType == jwt.TOKEN_TYPE_API_TOKEN {
 			// if the api token has been restricted to a specific ip, then check the ip
 			if !checkIP(ctx, claims) {
+				log.Println("LoginRequired: unauthorized access from ip: ", ctx.ClientIP())
 				abortUnauthorized(ctx)
 				return
 			}
 			if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
+				log.Println("LoginRequired: forbidden access from ip: ", ctx.ClientIP())
 				abortForbidden(ctx)
 				return
 			}
@@ -144,10 +160,12 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 			// the access token must be restricted to a specific ip
 			// it is supposed to refresh the access token if the ip is changed
 			if !checkIP(ctx, claims) {
+				log.Println("LoginRequired: unauthorized access from ip: ", ctx.ClientIP())
 				abortUnauthorized(ctx)
 				return
 			}
 			if !checkUserHasRight(claims.AuthGroup, GetSystemID(), apiUUID) {
+				log.Println("LoginRequired: forbidden access from ip: ", ctx.ClientIP())
 				abortForbidden(ctx)
 				return
 			}
@@ -156,6 +174,7 @@ func LoginRequired(Method string, Path string) gin.HandlerFunc {
 		}
 
 		// unknown token type, should not happen
+		log.Println("LoginRequired: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 	}
 }
@@ -165,6 +184,7 @@ func RefreshTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
 
 	if claims == nil || claims.TokenType != jwt.TOKEN_TYPE_REFRESH_TOKEN {
+		log.Println("RefreshTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
@@ -180,11 +200,13 @@ func SystemTokenOnly(ctx *gin.Context) {
 	claims := GetClaims(ctx)
 
 	if claims == nil || claims.TokenType != jwt.TOKEN_TYPE_SYSTEM_TOKEN {
+		log.Println("SystemTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
 
 	if !checkIP(ctx, claims) {
+		log.Println("SystemTokenOnly: unauthorized access from ip: ", ctx.ClientIP())
 		abortUnauthorized(ctx)
 		return
 	}
